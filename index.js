@@ -29,16 +29,35 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/gps", async (req, res) => {
-      const { latitude, longitude } = req.body;
-      const objectId = new ObjectId("6719eca6761ba4c222624894");
-      const result = await dataBase.collection("gps").updateOne({ _id: objectId }, { $set: { latitude, longitude } });
+    // app.patch("/gps", async (req, res) => {
+    //   const { latitude, longitude } = req.body;
+    //   const objectId = new ObjectId("6719eca6761ba4c222624894");
+    //   const result = await dataBase.collection("gps").updateOne({ _id: objectId }, { $set: { latitude, longitude } });
 
-        if (result.matchedCount === 0) {
-          return res.status(404);
-        }
-        return res.status(200);
-    });
+    //     if (result.matchedCount === 0) {
+    //       return res.status(404);
+    //     }
+    //     return res.status(200);
+    // });
+
+    app.put('/gps', async (req, res) => {
+      const filter = { _id: new ObjectId('6719eca6761ba4c222624894') }
+      const options = { upsert: true };
+      const Collection = dataBase.collection("gps");
+      const {latitude,longitude} = req.body;
+
+      const gps_info = {
+
+
+        $set: {
+          latitude: latitude,
+          longitude:longitude
+        },
+      }
+
+      const result = await Collection.updateOne(filter, gps_info, options);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
