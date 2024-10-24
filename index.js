@@ -25,8 +25,8 @@ async function run() {
     app.post("/gps", async function (req, res) {
       const Collection = dataBase.collection("gps");
       const gps_info = req.body;
-      console.log(gps_info);
-      res.send(gps_info);
+      const result = await Collection.insertOne(gps_info);
+      res.send(result);
     });
 
     app.patch("/gps", async (req, res) => {
@@ -37,7 +37,7 @@ async function run() {
         if (result.matchedCount === 0) {
           return res.status(404);
         }
-        res.status(200);
+        return res.status(200);
     });
 
     // Send a ping to confirm a successful connection
