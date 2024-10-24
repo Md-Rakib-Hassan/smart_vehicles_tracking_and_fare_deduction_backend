@@ -32,7 +32,7 @@ async function run() {
     app.patch("/gps", async (req, res) => {
       const { latitude, longitude } = req.body;
       const objectId = new ObjectId("6719eca6761ba4c222624894");
-      const result = await db.collection("gps").updateOne({ _id: objectId }, { $set: { latitude, longitude } });
+      const result = await dataBase.collection("gps").updateOne({ _id: objectId }, { $set: { latitude, longitude } });
 
         if (result.matchedCount === 0) {
           return res.status(404);
