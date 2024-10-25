@@ -1,8 +1,16 @@
 const express = require("express");
 const app = express();
+const cors = require('cors');
+const axios = require('axios');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 app.use(express.json());
+
+app.use(cors({
+  origin: ['http://localhost:5174','http://localhost:5173'],
+  credentials: true,
+  optionSuccessStatus: 200
+}));
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.uztm9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -28,6 +36,65 @@ async function run() {
       const result = await Collection.insertOne(gps_info);
       res.send(result);
     });
+
+    
+
+    app.post('/booking', async (req, res) => { 
+      const Collection = dataBase.collection("booking");
+      const {uid} = req.body;
+      const user = await Collection.findOne({ cardUID:uid });
+      if (user) {
+        // const { data: location } = await axios.get('http://localhost:5000/gps');
+        const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
+        delete location._id;
+        if (JSON.stringify(location) !== JSON.stringify(user.start)) {
+          user['end'] = location;
+          const money = user.money - 20;
+          delete user.money;
+          const newMoney = {
+            $set: {
+              money:money
+            },
+          }
+          const userCollection = dataBase.collection("users");
+          const result = await userCollection.updateOne({ cardUID: uid }, newMoney, { upsert: true });
+          const traveledColection = dataBase.collection("traveled");
+          const traveledReselt = await traveledColection.insertOne(user);
+          const deleteResult = await Collection.deleteOne({ cardUID: uid });
+          res.send(result);
+          
+        }
+        else {
+          res.status(425).send({ massage: "not yet travel" });
+        }
+      }
+      else {
+        const userCollection = dataBase.collection("users");
+        const user = await userCollection.findOne({ cardUID:uid });
+        if (user) {
+          // const { data: location } = await axios.get('http://localhost:5000/gps');
+          const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
+          delete location._id;
+          user['start'] = location;
+          delete user._id;
+          const result = await Collection.insertOne(user);
+          res.send(result);
+        }
+        else {
+          res.status(404)
+          res.send();
+        }
+        
+      }
+      res.send();
+    })
+
+    app.get("/gps", async (req,res) => {
+      const Collection = dataBase.collection("gps");
+      const coursor = Collection.find();
+      const result = await coursor.toArray();
+      res.send(result[0]);
+    })
 
     // app.patch("/gps", async (req, res) => {
     //   const { latitude, longitude } = req.body;
@@ -56,6 +123,7 @@ async function run() {
       const result = await Collection.updateOne(filter, gps_info, options);
       res.send(result);
     })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
