@@ -51,9 +51,11 @@ async function run() {
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
           //start and end not same so travled
           user['end'] = location;
+          user.money -= 20;
+          const money = user.money;
           const newMoney = {
             $set: {
-              money:user.money - 20,
+              money:user.money,
             },
           }
           delete user.money;
@@ -62,7 +64,7 @@ async function run() {
           const traveledColection = dataBase.collection("traveled");
           const traveledReselt = await traveledColection.insertOne(user);
           const deleteResult = await Collection.deleteOne({ cardUID: uid });
-          return res.status(200).send({massage:"See you next time!"});
+          return res.status(200).send({massage:`See you next time! ${user.name}`,Balance:money});
           
         }
         else {
@@ -78,7 +80,7 @@ async function run() {
           //user is authentic
           // const { data: location } = await axios.get('http://localhost:5000/gps');
           if (user.money < 20) {
-            return res.status(503).send({ massage: "Sorry you don't have enough money." });
+            return res.status(503).send({ massage: "Sorry you don't have enough money.",Balance:user.money });
           }
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
           delete location._id;
@@ -86,7 +88,7 @@ async function run() {
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) { 
-            return res.status(200).send({ massage: "Enjoy the journey"});
+            return res.status(200).send({ massage: `Enjoy the journey ${user.name}`,Balance:user.money });
           } 
           
         }
