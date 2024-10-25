@@ -37,6 +37,24 @@ async function run() {
       return res.send(result);
     });
 
+    app.post("/students-location", async function (req, res) { 
+      const Collection = dataBase.collection("student_location");
+      const location_info = req.body;
+      const { data: student_info } = await axios.get(`http://localhost:5000/student/${location_info?.studentID}`);
+      if (student_info) {
+        if (student_info.money < 20) return res.status(503).send({ massage: "Sorry you don't have enough money.", Balance: student_info.money });
+        else {
+          const is_already_shared_location =await Collection.findOne({ studentID: student_info?.studentID });
+          if (is_already_shared_location) return res.status(409).send({ massage: "You already shared your location" });
+          student_info.geocode = location_info.geocode;
+          const result = await Collection.insertOne(student_info);
+          return res.status(200).send(result);
+        }
+      }
+      else {
+        return res.status(404).send({ massage: "User is not registered" });
+      }
+    })
     
 
     app.post('/booking', async (req, res) => { 
@@ -69,7 +87,7 @@ async function run() {
         }
         else {
           //start and end same so in same location
-          return res.status(425).send({ massage: "not yet travel so no need of money" });
+          return res.status(425).send({ massage: "Not yet travel so no need of money" });
         }
       }
       else {
@@ -88,6 +106,12 @@ async function run() {
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) { 
+            const locationCollection = dataBase.collection("student_location");
+            const is_shared_location = await locationCollection.findOne({ studentID: user.studentID });
+            if (is_shared_location) {
+              const deleteResult = await locationCollection.deleteOne({ studentID: user.studentID });
+            }
+
             return res.status(200).send({ massage: `Enjoy the journey ${user.name}`,Balance:user.money });
           } 
           
@@ -108,11 +132,25 @@ async function run() {
       return res.send(result[0]);
     })
 
+    app.get("/students-location", async (req,res) => {
+      const Collection = dataBase.collection("student_location");
+      const result = await Collection.find().toArray();
+      return res.send(result);
+    })
+
+
     app.get("/booked-seat", async (req, res) => { 
       const Collection = dataBase.collection("booking");
       result = await Collection.find().toArray();
       return res.send({booked:result.length});
     })
+
+    app.get("/student/:id", async (req, res) => { 
+      console.log(req.params);
+      Collection = dataBase.collection("users");
+      const user = await Collection.findOne({ studentID: req?.params?.id },{projection:{cardUID:0, _id:0}});
+      return res.send(user);
+    });
 
     // app.patch("/gps", async (req, res) => {
     //   const { latitude, longitude } = req.body;
