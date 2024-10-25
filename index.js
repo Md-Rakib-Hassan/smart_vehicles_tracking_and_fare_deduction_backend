@@ -44,49 +44,56 @@ async function run() {
       const {uid} = req.body;
       const user = await Collection.findOne({ cardUID:uid });
       if (user) {
+        //already in booking list
         // const { data: location } = await axios.get('http://localhost:5000/gps');
         const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
         delete location._id;
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
+          //start and end not same so travled
           user['end'] = location;
-          const money = user.money - 20;
-          delete user.money;
           const newMoney = {
             $set: {
-              money:money
+              money:user.money - 20,
             },
           }
+          delete user.money;
           const userCollection = dataBase.collection("users");
           const result = await userCollection.updateOne({ cardUID: uid }, newMoney, { upsert: true });
           const traveledColection = dataBase.collection("traveled");
           const traveledReselt = await traveledColection.insertOne(user);
           const deleteResult = await Collection.deleteOne({ cardUID: uid });
-          res.send(result);
+          res.status(200).send({massage:"See you next time!"});
           
         }
         else {
-          res.status(425).send({ massage: "not yet travel" });
+          //start and end same so in same location
+          res.status(425).send({ massage: "not yet travel so no need of money" });
         }
       }
       else {
+        //not in booking list
         const userCollection = dataBase.collection("users");
         const user = await userCollection.findOne({ cardUID:uid });
         if (user) {
+          //user is authentic
           // const { data: location } = await axios.get('http://localhost:5000/gps');
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
           delete location._id;
           user['start'] = location;
           delete user._id;
           const result = await Collection.insertOne(user);
-          res.send(result);
+          if (result.acknowledged === true) { 
+            res.status(200).send({ massage: "Enjoy the journey"});
+          }
+          
         }
         else {
-          res.status(404)
-          res.send();
+          // user is not authentic
+ 
+          res.status(404).send({ massage: "User is not registered" });
         }
         
       }
-      res.send();
     })
 
     app.get("/gps", async (req,res) => {
@@ -94,6 +101,12 @@ async function run() {
       const coursor = Collection.find();
       const result = await coursor.toArray();
       res.send(result[0]);
+    })
+
+    app.get("/booked-seat", async (req, res) => { 
+      const Collection = dataBase.collection("booking");
+      result = await Collection.find().toArray();
+      res.send({booked:result.length});
     })
 
     // app.patch("/gps", async (req, res) => {
