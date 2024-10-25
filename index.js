@@ -40,7 +40,7 @@ async function run() {
     app.post("/students-location", async function (req, res) { 
       const Collection = dataBase.collection("student_location");
       const location_info = req.body;
-      const { data: student_info } = await axios.get(`http://localhost:5000/student/${location_info?.studentID}`);
+      const { data: student_info } = await axios.get(`https://test-server-iot.vercel.app/student/${location_info?.studentID}`);
       if (student_info) {
         if (student_info.money < 20) return res.status(503).send({ massage: "Sorry you don't have enough money.", Balance: student_info.money });
         else {
