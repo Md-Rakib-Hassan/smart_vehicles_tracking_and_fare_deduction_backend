@@ -7,7 +7,7 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 
 app.use(cors({
-  origin: ['http://localhost:5175','http://localhost:5173','https://glittery-longma-7bd21c.netlify.app/'],
+  origin: ['http://localhost:5175','http://localhost:5173','https://glittery-longma-7bd21c.netlify.app'],
   credentials: true,
   optionSuccessStatus: 200
 }));
