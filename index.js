@@ -77,6 +77,9 @@ async function run() {
         if (user) {
           //user is authentic
           // const { data: location } = await axios.get('http://localhost:5000/gps');
+          if (user.money < 20) {
+            res.status(503).send({ massage: "Sorry you don't have enough money." });
+          }
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
           delete location._id;
           user['start'] = location;
