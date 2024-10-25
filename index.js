@@ -7,7 +7,7 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 
 app.use(cors({
-  origin: ['http://localhost:5174','http://localhost:5173'],
+  origin: ['http://localhost:5175','http://localhost:5173','https://glittery-longma-7bd21c.netlify.app/'],
   credentials: true,
   optionSuccessStatus: 200
 }));
@@ -37,14 +37,14 @@ async function run() {
       return res.send(result);
     });
 
-    app.post("/students-location", async function (req, res) { 
+    app.post("/students-location", async function (req, res) {
       const Collection = dataBase.collection("student_location");
       const location_info = req.body;
       const { data: student_info } = await axios.get(`https://test-server-iot.vercel.app/student/${location_info?.studentID}`);
       if (student_info) {
         if (student_info.money < 20) return res.status(503).send({ massage: "Sorry you don't have enough money.", Balance: student_info.money });
         else {
-          const is_already_shared_location =await Collection.findOne({ studentID: student_info?.studentID });
+          const is_already_shared_location = await Collection.findOne({ studentID: student_info?.studentID });
           if (is_already_shared_location) return res.status(409).send({ massage: "You already shared your location" });
           student_info.geocode = location_info.geocode;
           const result = await Collection.insertOne(student_info);
