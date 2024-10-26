@@ -37,7 +37,7 @@ async function run() {
       return res.send(result);
     });
 
-    app.post("/students-location", async function (req, res) {
+    app.post("/mark-location", async function (req, res) {
       const Collection = dataBase.collection("student_location");
       const location_info = req.body;
       const { data: student_info } = await axios.get(`https://test-server-iot.vercel.app/student/${location_info?.studentID}`);
@@ -54,6 +54,32 @@ async function run() {
       else {
         return res.status(404).send({ massage: "User is not registered" });
       }
+    })
+
+    app.post('/unmark-location', async (req, res) => {
+      const { id } = req.body;
+      const Collection = dataBase.collection('student_location');
+      const user = await Collection.findOne({ studentID: id });
+      if (user) {
+        await Collection.deleteOne({ studentID: id });
+        return res.status(200).send();
+      }
+      return res.status(404).send({massage:"You didn't share the location."});
+      
+    })
+
+    app.post('/login', async (req, res) => { 
+      const { id, password } = req.body;
+      const Collection = dataBase.collection('users');
+      const user = await Collection.findOne({ studentID: id });
+      if (user) { 
+        if (user.password == password) return res.status(200).send({ id: user.studentID })
+        else return res.status(400).send({massage:"Password is incorrect"});
+      }
+      else {
+        return res.status(404).send({massage: "User is not registered"});
+      }
+
     })
     
 
@@ -146,7 +172,6 @@ async function run() {
     })
 
     app.get("/student/:id", async (req, res) => { 
-      console.log(req.params);
       Collection = dataBase.collection("users");
       const user = await Collection.findOne({ studentID: req?.params?.id },{projection:{cardUID:0, _id:0}});
       return res.send(user);
@@ -190,6 +215,9 @@ async function run() {
   }
 }
 run().catch(console.dir);
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the API', status: 'OK' });
+});
 
 app.listen(port, () => {
   console.log("server is running");
