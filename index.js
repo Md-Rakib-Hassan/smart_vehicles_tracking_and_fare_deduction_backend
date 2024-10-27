@@ -97,9 +97,7 @@ async function run() {
         delete location._id;
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
           //start and end not same so travled
-          const f = fetchFormattedLocation(location.latitude, location.longitude);
-          console.log(f);
-          user['end'] = {geo:location,f:f, timestamp: new Date()};
+          user['end'] = {geo:location, timestamp: new Date()};
           user.money -= 20;
           const money = user.money;
           const newMoney = {
@@ -133,9 +131,7 @@ async function run() {
           }
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
           delete location._id;
-          const f = fetchFormattedLocation(location.latitude, location.longitude);
-          
-          user['start'] = {geo:location,f:f, timestamp: new Date()};;
+          user['start'] = {geo:location, timestamp: new Date()};;
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) { 
@@ -222,34 +218,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-async function fetchFormattedLocation(latitude, longitude) {
-  const apiUrl = `${process.env.LOC_END}`;
-  const apiKey = process.env.GEOCODING_KEY;
-
-  try {
-      const response = await axios.get(apiUrl, {
-          params: {
-              key: apiKey,
-              q: `${latitude},${longitude}`,
-              pretty: 1
-          }
-      });
-      
-      if (response.status === 200) {
-          const locationDetails = response.data;
-          console.log("Location Details:", locationDetails);
-          return locationDetails;
-      } else {
-          console.error("Unexpected response status:", response.status);
-          return null;
-      }
-
-  } catch (error) {
-      console.error("Error fetching formatted location:", error.message);
-      return null;
-  }
-}
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API', status: 'OK' });
