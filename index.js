@@ -46,6 +46,9 @@ async function run() {
         else {
           const is_already_shared_location = await Collection.findOne({ studentID: student_info?.studentID });
           if (is_already_shared_location) return res.status(409).send({ massage: "You already shared your location" });
+          const booking_collection = dataBase.collection("booking");
+          const is_already_in_bus = await Collection.findOne({ studentID: student_info?.studentID });
+          if(is_already_in_bus) return res.status(409).send({ massage: "You already in the bus." });
           student_info.geocode = location_info.geocode;
           const result = await Collection.insertOne(student_info);
           return res.status(200).send(result);
