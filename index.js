@@ -94,13 +94,17 @@ async function run() {
         //already in booking list
         // const { data: location } = await axios.get('http://localhost:5000/gps');
         const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
-        let location_details;
-         axios.get(`${process.env.LOC_END}?key=${process.env.GEOCODING_KEY}&q=${location.latitude},${location?.longitude}&pretty=1`).then(response => location_details=response?.data).catch(error => console.error(error));
+        
+        const api_url=`${process.env.LOC_END}?key=${process.env.GEOCODING_KEY}&q=${location.latitude},${location?.longitude}&pretty=1`
+        const resu = await fetch(api_url);
+        const location_details = await resu.json();
+        while (!location_details);
+        console.log(location_details);
           const formatted_location = location_details?.results[0]?.formatted;
         delete location._id;
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
           //start and end not same so travled
-          user['end'] = {geo:location,formatted_location:formatted_location, timestamp: new Date()};
+          user['end'] = {geo:location,f_location:formatted_location, timestamp: new Date()};
           user.money -= 20;
           const money = user.money;
           const newMoney = {
@@ -134,12 +138,13 @@ async function run() {
           }
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
 
-          let location_details;
-          axios.get(`${process.env.LOC_END}?key=${process.env.GEOCODING_KEY}&q=${location.latitude},${location?.longitude}&pretty=1`).then(response => location_details = response?.data).catch(error => console.error(error));
-          
+          const api_url=`${process.env.LOC_END}?key=${process.env.GEOCODING_KEY}&q=${location.latitude},${location?.longitude}&pretty=1`
+           const resu = await fetch(api_url);
+          const location_details = await resu.json();
+          while (!location_details);
           const formatted_location = location_details?.results[0]?.formatted;
           delete location._id;
-          user['start'] = {geo:location,formatted_location:formatted_location, timestamp: new Date()};;
+          user['start'] = {geo:location,f_location:formatted_location, timestamp: new Date()};;
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) { 
