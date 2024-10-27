@@ -47,7 +47,7 @@ async function run() {
           const is_already_shared_location = await Collection.findOne({ studentID: student_info?.studentID });
           if (is_already_shared_location) return res.status(409).send({ massage: "You already shared your location" });
           const booking_collection = dataBase.collection("booking");
-          const is_already_in_bus = await Collection.findOne({ studentID: student_info?.studentID });
+          const is_already_in_bus = await booking_collection.findOne({ studentID: student_info?.studentID });
           if(is_already_in_bus) return res.status(409).send({ massage: "You already in the bus." });
           student_info.geocode = location_info.geocode;
           const result = await Collection.insertOne(student_info);
@@ -74,9 +74,9 @@ async function run() {
     app.post('/login', async (req, res) => { 
       const { id, password } = req.body;
       const Collection = dataBase.collection('users');
-      const user = await Collection.findOne({ studentID: id });
+      const user = await Collection.findOne({ studentID: id});
       if (user) { 
-        if (user.password == password) return res.status(200).send({ id: user.studentID })
+        if (user.password == password) return res.status(200).send({ id: user.studentID ,role: user?.role });
         else return res.status(400).send({massage:"Password is incorrect"});
       }
       else {
@@ -97,7 +97,7 @@ async function run() {
         delete location._id;
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
           //start and end not same so travled
-          user['end'] = location;
+          user['end'] = {geo:location, timestamp: new Date()};
           user.money -= 20;
           const money = user.money;
           const newMoney = {
@@ -131,7 +131,7 @@ async function run() {
           }
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
           delete location._id;
-          user['start'] = location;
+          user['start'] = {geo:location, timestamp: new Date()};;
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) { 
@@ -168,17 +168,17 @@ async function run() {
     })
 
 
-    app.get("/booked-seat", async (req, res) => { 
+    app.get("/booked-seat", async (req, res) => {
       const Collection = dataBase.collection("booking");
       result = await Collection.find().toArray();
-      return res.send({booked:result.length});
+      return res.send({ booked: result.length });
     })
 
     app.get("/student/:id", async (req, res) => { 
       Collection = dataBase.collection("users");
-      const user = await Collection.findOne({ studentID: req?.params?.id },{projection:{cardUID:0, _id:0}});
+      const user = await Collection.findOne({ studentID: req?.params?.id },{projection:{_id:0, password:0}});
       return res.send(user);
-    });
+    })
 
     // app.patch("/gps", async (req, res) => {
     //   const { latitude, longitude } = req.body;
