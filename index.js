@@ -94,10 +94,12 @@ async function run() {
         //already in booking list
         // const { data: location } = await axios.get('http://localhost:5000/gps');
         const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
+        const { data: location_details } = await axios.get(`https://api.opencagedata.com/geocode/v1/json?q=${location.latitude}%2C${location.longitude}&key=${process.env.GEOCODING_KEY}`);
+          const formatted_location = location_details.results[0].formatted;
         delete location._id;
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
           //start and end not same so travled
-          user['end'] = {geo:location, timestamp: new Date()};
+          user['end'] = {geo:location,formatted_location:formatted_location, timestamp: new Date()};
           user.money -= 20;
           const money = user.money;
           const newMoney = {
@@ -130,8 +132,10 @@ async function run() {
             return res.status(503).send({ massage: "Sorry you don't have enough money.",Balance:user.money });
           }
           const { data: location } = await axios.get('https://test-server-iot.vercel.app/gps');
+          const { data: location_details } = await axios.get(`https://api.opencagedata.com/geocode/v1/json?q=${location.latitude}%2C${location.longitude}&key=${process.env.GEOCODING_KEY}`);
+          const formatted_location = location_details.results[0].formatted;
           delete location._id;
-          user['start'] = {geo:location, timestamp: new Date()};;
+          user['start'] = {geo:location,formatted_location:formatted_location, timestamp: new Date()};;
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) { 
