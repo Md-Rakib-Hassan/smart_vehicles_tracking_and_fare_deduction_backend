@@ -73,12 +73,8 @@ async function run() {
     })
     
 
-    const queueCollection = dataBase.collection('regirstration-queue');
-    const indexExists = await queueCollection.indexExists("createdAt_1");
-    if (indexExists) {
-      await queueCollection.dropIndex("createdAt_1");
-    }
-    await queueCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 10 });
+    
+
     app.get('/regirstration-queue', async (req, res) => { 
       const queueCollection = dataBase.collection('regirstration-queue');
       const users = await queueCollection.findOne();
@@ -88,6 +84,7 @@ async function run() {
 
     app.post('/regirstration-queue', async (req, res) => {
       const { uid } = req.body;
+      const queueCollection = dataBase.collection('regirstration-queue');
       const result = await queueCollection.insertOne({ cardUID: uid ,createdAt: new Date() });
       if (result.acknowledged) return res.status(200).send({ massage: "User added to the queue" });
       return res.status(500).send({ massage: "There is a problem." });
