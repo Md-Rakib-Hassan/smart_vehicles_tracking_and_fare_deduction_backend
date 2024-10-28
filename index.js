@@ -29,6 +29,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const dataBase = client.db("DIU_Connect");
+    
 
     app.post("/gps", async function (req, res) {
       const Collection = dataBase.collection("gps");
@@ -70,6 +71,24 @@ async function run() {
       return res.status(404).send({massage:"You didn't share the location."});
       
     })
+    
+
+    const queueCollection = dataBase.collection('regirstration-queue');
+    await queueCollection.dropIndex("createdAt_1");
+    await queueCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 10 });
+
+    app.get('/regirstration-queue', async (req, res) => { 
+      const users = await queueCollection.findOne();
+      res.send(users);
+      
+    })
+
+    app.post('/regirstration-queue', async (req, res) => {
+      const { uid } = req.body;
+      const result = await queueCollection.insertOne({ cardUID: uid ,createdAt: new Date() });
+      if (result.acknowledged) return res.status(200).send({ massage: "User added to the queue" });
+      return res.status(500).send({ massage: "There is a problem." });
+     })
 
     app.post('/login', async (req, res) => { 
       const { id, password } = req.body;
@@ -166,6 +185,19 @@ async function run() {
       const result = await Collection.find().toArray();
       return res.send(result);
     })
+
+    app.post("/activity", async (req, res) => {
+      const { id } = req.body;
+      const Collection = dataBase.collection("traveled");
+      const all_data = await Collection.find({ studentID: id },{projection:{password:0}}).toArray();
+      res.send(all_data);
+    });
+
+    app.get("/all-user", async (req, res) => {
+      const Collection = dataBase.collection("users");
+      const all_data = await Collection.find({},{projection:{password:0}}).toArray();
+      res.send(all_data);
+    });
 
 
     app.get("/booked-seat", async (req, res) => {
