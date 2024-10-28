@@ -74,10 +74,13 @@ async function run() {
     
 
     const queueCollection = dataBase.collection('regirstration-queue');
-    await queueCollection.dropIndex("createdAt_1");
+    const indexExists = await queueCollection.indexExists("createdAt_1");
+    if (indexExists) {
+      await queueCollection.dropIndex("createdAt_1");
+    }
     await queueCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 10 });
-
     app.get('/regirstration-queue', async (req, res) => { 
+      const queueCollection = dataBase.collection('regirstration-queue');
       const users = await queueCollection.findOne();
       res.send(users);
       
