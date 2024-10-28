@@ -89,7 +89,7 @@ async function run() {
     if (indexExists) {
       await queueCollection.dropIndex("createdAt_1");
     }
-    await queueCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 10 });
+    await queueCollection.createIndex({ createdAt: 1 }, { expireAfterSeconds: 2 });
       const result = await queueCollection.insertOne({ cardUID: uid ,createdAt: new Date() });
       if (result.acknowledged) return res.status(200).send({ massage: "User added to the queue" });
       return res.status(500).send({ massage: "There is a problem." });
