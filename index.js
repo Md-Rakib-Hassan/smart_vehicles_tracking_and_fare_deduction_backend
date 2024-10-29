@@ -38,6 +38,13 @@ async function run() {
       return res.send(result);
     });
 
+    app.post("/user", async function (req, res) {
+      const Collection = dataBase.collection("users");
+      const user_info = req.body;
+      const result = await Collection.insertOne(user_info);
+      return res.send(result);
+    });
+
     app.post("/mark-location", async function (req, res) {
       const Collection = dataBase.collection("student_location");
       const location_info = req.body;
@@ -201,6 +208,18 @@ async function run() {
     app.get("/all-user", async (req, res) => {
       const Collection = dataBase.collection("users");
       const all_data = await Collection.find({},{projection:{password:0}}).toArray();
+      res.send(all_data);
+    });
+
+    app.get("/all-traveled", async (req, res) => {
+      const Collection = dataBase.collection("traveled");
+      const all_data = await Collection.find({},{projection:{password:0}}).toArray();
+      res.send(all_data);
+    });
+
+    app.get("/all-driver", async (req, res) => {
+      const Collection = dataBase.collection("users");
+      const all_data = await Collection.find({role:"Driver"},{projection:{password:0}}).toArray();
       res.send(all_data);
     });
 
