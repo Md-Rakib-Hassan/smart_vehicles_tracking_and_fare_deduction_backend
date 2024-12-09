@@ -240,7 +240,7 @@ async function run() {
 
     app.post("/booking", async (req, res) => {
       const Collection = dataBase.collection("booking");
-      const { uid } = req.body;
+      const { uid,bus_id } = req.body;
       const user = await Collection.findOne({ cardUID: uid });
       if (user) {
         //already in booking list
@@ -301,6 +301,7 @@ async function run() {
           );
           delete location._id;
           user["start"] = { geo: location, timestamp: new Date() };
+          user["bus_id"] = bus_id;
           delete user._id;
           const result = await Collection.insertOne(user);
           if (result.acknowledged === true) {
@@ -364,7 +365,7 @@ async function run() {
       const Collection = dataBase.collection("gps");
       const coursor = Collection.find();
       const result = await coursor.toArray();
-      return res.send(result[0]);
+      return res.send(result);
     });
 
     app.get("/students-location", async (req, res) => {
