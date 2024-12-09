@@ -437,13 +437,14 @@ async function run() {
     // });
 
     app.put("/gps", async (req, res) => {
-      const filter = { _id: new ObjectId("6719eca6761ba4c222624894") };
       const options = { upsert: true };
       const Collection = dataBase.collection("gps");
-      const { latitude, longitude } = req.body;
+      const { latitude, longitude,bus_id } = req.body;
+      const filter = { bus_id};
 
       const gps_info = {
         $set: {
+          bus_id,
           latitude: latitude,
           longitude: longitude,
         },
