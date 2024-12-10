@@ -36,6 +36,7 @@ async function run() {
     const dataBase = client.db("DIU_Connect");
 
     app.post("/gps", async function (req, res) {
+   
       const Collection = dataBase.collection("gps");
       const gps_info = req.body;
       const result = await Collection.insertOne(gps_info);
@@ -99,6 +100,33 @@ async function run() {
         .send({ message: "You didn't share the location." });
     });
 
+    app.post("/get-bus-by-destination", async (req, res) => {
+      console.log(res.body);
+      const { date, from, to } = req.body;
+      const Collection = dataBase.collection("bus-schedules");
+    
+      // Find documents that match the date and have a route with matching from/to
+      const cursor = Collection.find({
+        date: date,
+        "allRoutes.from": from,
+        "allRoutes.to": to
+      });
+    
+      const documents = await cursor.toArray();
+    
+      // Extract only the matching buses
+      const result = documents.map(doc => {
+        const matchingRoutes = doc.allRoutes.filter(route => route.from === from && route.to === to);
+        return {
+          _id: doc._id,
+          date: doc.date,
+          matchingRoutes: matchingRoutes
+        };
+      });
+    
+      return res.send(result);
+    });
+
     app.post("/add-bus", async (req, res) => {
       const { bus_id, bus_name } = req.body;
       console.log(bus_id, bus_name);
@@ -121,6 +149,14 @@ async function run() {
       const users = await queueCollection.find().toArray();
       res.send(users);
     });
+    app.get("/get-bus-id/:busname", async (req, res) => { 
+      const busname=req.params.busname;
+      const collection = dataBase.collection("all-bus");
+      const bus = await collection.findOne({ bus_name: busname });
+      res.send(bus?.bus_id);
+      
+    })
+    
 
     app.delete("/available-bus/:id", async (req, res) => {
       const busId = req.params.id;
