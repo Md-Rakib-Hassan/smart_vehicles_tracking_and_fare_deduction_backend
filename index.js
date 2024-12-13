@@ -394,6 +394,7 @@ async function run() {
       const date = req.params.dt;
       const Collection = dataBase.collection("bus-schedules");
       const routes = await Collection.findOne({ date: date });
+      console.log(routes);
       return res.send(routes);
     })
 
