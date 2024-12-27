@@ -101,7 +101,7 @@ async function run() {
     });
 
     app.post("/get-bus-by-destination", async (req, res) => {
-      console.log(res.body);
+      // console.log(res.body);
       const { date, from, to } = req.body;
       const Collection = dataBase.collection("bus-schedules");
     
@@ -129,7 +129,7 @@ async function run() {
 
     app.post("/add-bus", async (req, res) => {
       const { bus_id, bus_name } = req.body;
-      console.log(bus_id, bus_name);
+      // console.log(bus_id, bus_name);
       const Collection = dataBase.collection("all-bus");
       // Check if the bus already exists by bus_id or bus_name
       const busExists = await Collection.findOne({
@@ -237,7 +237,7 @@ async function run() {
     app.get("/regirstration-queue", async (req, res) => {
       const queueCollection = dataBase.collection("regirstration-queue");
       const users = await queueCollection.findOne();
-      console.log(users);
+      // console.log(users);
       res.send(users);
     });
 
@@ -394,12 +394,22 @@ async function run() {
       const date = req.params.dt;
       const Collection = dataBase.collection("bus-schedules");
       const routes = await Collection.findOne({ date: date });
-      console.log(routes);
+      // console.log(routes);
       return res.send(routes);
     })
 
     app.get("/gps", async (req, res) => {
+      const { busName } = req.query;
       const Collection = dataBase.collection("gps");
+
+      if (busName) {
+        console.log(busName);
+        const {data:bus_id} = await axios.get(`http://localhost:5000/get-bus-id/${busName}`);
+        const coursor = Collection.find({bus_id});
+        const result = await coursor.toArray();
+        console.log(result);
+        return res.send(result);
+      }
       const coursor = Collection.find();
       const result = await coursor.toArray();
       return res.send(result);
