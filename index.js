@@ -36,7 +36,6 @@ async function run() {
     const dataBase = client.db("DIU_Connect");
 
     app.post("/gps", async function (req, res) {
-   
       const Collection = dataBase.collection("gps");
       const gps_info = req.body;
       const result = await Collection.insertOne(gps_info);
@@ -54,16 +53,14 @@ async function run() {
       const Collection = dataBase.collection("student_location");
       const location_info = req.body;
       const { data: student_info } = await axios.get(
-        `https://test-server-iot.vercel.app/student/${location_info?.studentID}`
+        `${process.env.BASE}/student/${location_info?.studentID}`
       );
       if (student_info) {
         if (student_info.money < 20)
-          return res
-            .status(503)
-            .send({
-              message: "Sorry you don't have enough money.",
-              Balance: student_info.money,
-            });
+          return res.status(503).send({
+            message: "Sorry you don't have enough money.",
+            Balance: student_info.money,
+          });
         else {
           const is_already_shared_location = await Collection.findOne({
             studentID: student_info?.studentID,
@@ -104,26 +101,28 @@ async function run() {
       // console.log(res.body);
       const { date, from, to } = req.body;
       const Collection = dataBase.collection("bus-schedules");
-    
+
       // Find documents that match the date and have a route with matching from/to
       const cursor = Collection.find({
         date: date,
         "allRoutes.from": from,
-        "allRoutes.to": to
+        "allRoutes.to": to,
       });
-    
+
       const documents = await cursor.toArray();
-    
+
       // Extract only the matching buses
-      const result = documents.map(doc => {
-        const matchingRoutes = doc.allRoutes.filter(route => route.from === from && route.to === to);
+      const result = documents.map((doc) => {
+        const matchingRoutes = doc.allRoutes.filter(
+          (route) => route.from === from && route.to === to
+        );
         return {
           _id: doc._id,
           date: doc.date,
-          matchingRoutes: matchingRoutes
+          matchingRoutes: matchingRoutes,
         };
       });
-    
+
       return res.send(result);
     });
 
@@ -149,14 +148,12 @@ async function run() {
       const users = await queueCollection.find().toArray();
       res.send(users);
     });
-    app.get("/get-bus-id/:busname", async (req, res) => { 
-      const busname=req.params.busname;
+    app.get("/get-bus-id/:busname", async (req, res) => {
+      const busname = req.params.busname;
       const collection = dataBase.collection("all-bus");
       const bus = await collection.findOne({ bus_name: busname });
       res.send(bus?.bus_id);
-      
-    })
-    
+    });
 
     app.delete("/available-bus/:id", async (req, res) => {
       const busId = req.params.id;
@@ -276,14 +273,12 @@ async function run() {
 
     app.post("/booking", async (req, res) => {
       const Collection = dataBase.collection("booking");
-      const { uid,bus_id } = req.body;
+      const { uid, bus_id } = req.body;
       const user = await Collection.findOne({ cardUID: uid });
       if (user) {
         //already in booking list
-        // const { data: location } = await axios.get('http://localhost:5000/gps');
-        const { data: location } = await axios.get(
-          "https://test-server-iot.vercel.app/gps"
-        );
+        // const { data: location } = await axios.get(`${process.env.BASE}/gps`);
+        const { data: location } = await axios.get(`${process.env.BASE}/gps`);
         delete location._id;
         if (JSON.stringify(location) !== JSON.stringify(user.start)) {
           //start and end not same so travled
@@ -305,12 +300,10 @@ async function run() {
           const traveledColection = dataBase.collection("traveled");
           const traveledReselt = await traveledColection.insertOne(user);
           const deleteResult = await Collection.deleteOne({ cardUID: uid });
-          return res
-            .status(200)
-            .send({
-              message: `See you next time! ${user.name}`,
-              Balance: money,
-            });
+          return res.status(200).send({
+            message: `See you next time! ${user.name}`,
+            Balance: money,
+          });
         } else {
           //start and end same so in same location
           return res
@@ -323,18 +316,14 @@ async function run() {
         const user = await userCollection.findOne({ cardUID: uid });
         if (user) {
           //user is authentic
-          // const { data: location } = await axios.get('http://localhost:5000/gps');
+          // const { data: location } = await axios.get(`${process.env.BASE}/gps`);
           if (user.money < 20) {
-            return res
-              .status(503)
-              .send({
-                message: "Sorry you don't have enough money.",
-                Balance: user.money,
-              });
+            return res.status(503).send({
+              message: "Sorry you don't have enough money.",
+              Balance: user.money,
+            });
           }
-          const { data: location } = await axios.get(
-            "https://test-server-iot.vercel.app/gps"
-          );
+          const { data: location } = await axios.get(`${process.env.BASE}/gps`);
           delete location._id;
           user["start"] = { geo: location, timestamp: new Date() };
           user["bus_id"] = bus_id;
@@ -351,12 +340,10 @@ async function run() {
               });
             }
 
-            return res
-              .status(200)
-              .send({
-                message: `Enjoy the journey ${user.name}`,
-                Balance: user.money,
-              });
+            return res.status(200).send({
+              message: `Enjoy the journey ${user.name}`,
+              Balance: user.money,
+            });
           }
         } else {
           // user is not authentic
@@ -365,8 +352,6 @@ async function run() {
         }
       }
     });
-
-    
 
     app.post("/add-bus-schedules", async (req, res) => {
       const payload = req.body;
@@ -390,13 +375,13 @@ async function run() {
       }
     });
 
-    app.get('/get-bus-schedules/:dt', async (req, res) => {
+    app.get("/get-bus-schedules/:dt", async (req, res) => {
       const date = req.params.dt;
       const Collection = dataBase.collection("bus-schedules");
       const routes = await Collection.findOne({ date: date });
       // console.log(routes);
       return res.send(routes);
-    })
+    });
 
     app.get("/gps", async (req, res) => {
       const { busName } = req.query;
@@ -404,8 +389,10 @@ async function run() {
 
       if (busName) {
         console.log(busName);
-        const {data:bus_id} = await axios.get(`http://localhost:5000/get-bus-id/${busName}`);
-        const coursor = Collection.find({bus_id});
+        const { data: bus_id } = await axios.get(
+          `${process.env.BASE}/get-bus-id/${busName}`
+        );
+        const coursor = Collection.find({ bus_id });
         const result = await coursor.toArray();
         console.log(result);
         return res.send(result);
@@ -487,8 +474,8 @@ async function run() {
     app.put("/gps", async (req, res) => {
       const options = { upsert: true };
       const Collection = dataBase.collection("gps");
-      const { latitude, longitude,bus_id } = req.body;
-      const filter = { bus_id};
+      const { latitude, longitude, bus_id } = req.body;
+      const filter = { bus_id };
 
       const gps_info = {
         $set: {
